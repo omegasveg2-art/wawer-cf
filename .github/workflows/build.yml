@@ -1,0 +1,23 @@
+name: build
+on:
+  push:
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Unzip project
+        run: unzip -q 'cf_esp*.zip'
+      - name: Build cf_core (NDK)
+        working-directory: cf_esp
+        run: |
+          NDK=${ANDROID_NDK_LATEST_HOME:-$ANDROID_NDK_HOME}
+          $NDK/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android31-clang++ -std=c++20 -O2 -fno-exceptions -fPIE -pie -static-libstdc++ -Isrc src/*.cpp -o cf_core
+      - name: Build APK
+        working-directory: cf_esp
+        run: sh build_apk.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wawer_apk
+          path: cf_esp/cf_esp.apk
